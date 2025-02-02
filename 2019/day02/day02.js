@@ -32,4 +32,29 @@ const runProgram = (inputs, instructionPointer) => {
   return inputs[0];
 };
 
-export { runProgram, operations, multilpy, add };
+const inputs = fetchInput("./day02.txt");
+
+const findPair = (inputs, result) => {
+  for (let pair1 = 0; pair1 < 100; pair1++) {
+    inputs[1] = pair1;
+    for (let pair2 = 0; pair2 < 100; pair2++) {
+      inputs[2] = pair2;
+
+      if (runProgram([...inputs], 0) === result) return [pair1, pair2];
+    }
+  }
+
+  return [0, 0];
+};
+
+const main = () => {
+  const copy = [...inputs];
+  copy[1] = 12;
+  copy[2] = 2;
+  console.log("Part1: ", runProgram(copy, 0));
+
+  const result = 19690720;
+  console.log("Part2: ", findPair(inputs, result));
+};
+
+main();

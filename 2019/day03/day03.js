@@ -1,10 +1,9 @@
-import { fetchInput } from "./commonLib.js";
+const readFile = (file) => Deno.readTextFileSync(file);
 
-// const set1 = fetchInput("inputs/day03/part1.txt");
-// const set2 = fetchInput("inputs/day03/part2.txt");
-
-const set1 = ["R75", "D30", "R83", "U83", "L12", "D49", "R71", "U7", "L72"];
-const set2 = ["U62", "R66", "U55", "R34", "D71", "R55", "D58", "R83"];
+export const fetchInput = (file) => {
+  const content = readFile(file);
+  return content.split("\n").map((arr) => arr.split(","));
+};
 
 const directions = {
   U: ([x, y], value) => [x, y + value],
@@ -30,16 +29,30 @@ const generatePath = (set) => {
   return coordinates;
 };
 
+const manhattanDistance = ([x, y]) => Math.abs(x) + Math.abs(y);
+
+const findClosestIntersection = (intersections) => {
+  return Math.min(...intersections.map(manhattanDistance));
+};
+
+const [set1, set2] = fetchInput("./day03.txt");
+
 const findIntersections = (path1, path2) => {
   return [...path1]
     .filter((point) => path2.has(point))
     .map((p) => p.split(",").map(Number));
 };
 
-const manhattanDistance = ([x, y]) => Math.abs(x) + Math.abs(y);
+const findIntersectionsforSteps = (path1, path2) => {
+  const steps = [];
+  const keys1 = Object.keys(path1);
 
-const findClosestIntersection = (intersections) => {
-  return Math.min(...intersections.map(manhattanDistance));
+  for (const point of keys1) {
+    if (point in path2) {
+      steps.push([path1[point], path2[point]]);
+    }
+  }
+  return steps;
 };
 
 const main = () => {
@@ -48,6 +61,9 @@ const main = () => {
 
   const intersections = findIntersections(path1, path2);
   console.log("Intersections:", intersections);
+
+  const steps = findIntersectionsforSteps(path1, path2);
+  console.log("Nearest Steps:", findClosestIntersection(steps));
 
   const closestDistance = findClosestIntersection(intersections);
   console.log("Closest Manhattan Distance:", closestDistance);
