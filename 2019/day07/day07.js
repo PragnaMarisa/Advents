@@ -1,14 +1,12 @@
-const readFile = (file) => Deno.readTextFileSync(file);
-
-export const fetchInput = (file) => {
-  const content = readFile(file);
-  return content.split(",").map((ele) => +ele);
-};
-
 const add = (a, b) => a + b;
 const multilpy = (a, b) => a * b;
-const askPrompt = () => +prompt();
-const displayValue = (val) => console.log("display: ", val);
+
+const askPrompt = (prompts) => () => prompts.shift();
+
+const displayValue = (val) => {
+  console.log("display: ", val);
+  return val;
+};
 
 const makeModesOf = (opcode, arr) => {
   return Array(3 - arr.length)
@@ -47,11 +45,12 @@ const operations = {
   8: equals,
 };
 
-const runProgram = (inputs, instructionPointer) => {
+const runProgram = (inputs, instructionPointer, prompts) => {
+  let val = 0;
   while (instructionPointer < inputs.length) {
     const instruction = inputs[instructionPointer];
 
-    if (instruction === 99) return inputs[0];
+    if (instruction === 99) return val;
 
     const operandPos1 = inputs[instructionPointer + 1];
     const operandPos2 = inputs[instructionPointer + 2];
@@ -74,12 +73,12 @@ const runProgram = (inputs, instructionPointer) => {
     }
 
     if (opcode === 3) {
-      inputs[operandPos1] = operations[opcode]();
+      inputs[operandPos1] = operations[opcode](prompts)();
       instructionPointer += 2;
     }
 
     if (opcode === 4) {
-      operations[opcode](...getParameters([[o1, operandPos1]], inputs));
+      val = operations[opcode](...getParameters([[o1, operandPos1]], inputs));
       instructionPointer += 2;
     }
 
@@ -94,25 +93,59 @@ const runProgram = (inputs, instructionPointer) => {
       );
       instructionPointer += 4;
     }
-
-    if (!(opcode in operations)) return console.log(instructionPointer);
   }
 
-  return inputs;
+  return val;
 };
 
-// const inputs = fetchInput("./day05.txt");
+const readFile = (file) => Deno.readTextFileSync(file);
 
-// const inputs = [
-//   3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0,
-//   36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46,
-//   1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99,
-// ];
+export const fetchInput = (file) => {
+  const content = readFile(file);
+  return content.split(",").map(Number);
+};
+
+const sequence = [1, 0, 2, 3, 4];
+
+const getPermutations = (number) => {
+  if (number.length === 1) return [number];
+  const permutations = [];
+  for (let i = 0; i < number.length; i++) {
+    const currentDigit = number[i];
+    const remainingDigits = number.slice(0, i).concat(number.slice(i + 1));
+    const remainingPerms = getPermutations(remainingDigits);
+
+    for (const perm of remainingPerms) {
+      permutations.push([currentDigit, ...perm]);
+    }
+  }
+
+  return permutations;
+};
+
+const inputs = fetchInput("./day07.txt");
 
 const main = () => {
-  runProgram(inputs, 0);
+  const possibleSequences = getPermutations(sequence);
+  // console.log(possibleSequences);
+
+  let maxOutput = 0;
+  // const arr = [0, 1, 2, 3, 4];
+  for (const arr of possibleSequences) {
+    let result = 0;
+
+    for (let index = 0; index < arr.length; index++) {
+      let prompts = [arr[index], result];
+      // console.log("Prompts", prompts);
+
+      result = runProgram([...inputs], 0, [...prompts]);
+      // console.log("result:", result);
+    }
+
+    maxOutput = Math.max(maxOutput, result);
+  }
+
+  console.log("Max Output:", maxOutput);
 };
 
-// main();
-
-export { runProgram };
+main();

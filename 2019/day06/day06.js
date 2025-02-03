@@ -31,29 +31,45 @@ const makeObjects = (inputs) => {
   return obs;
 };
 
-const findDependents = (value, count, objects) => {
+const findDependents = (value, dependents, objects) => {
   if (!objects || !value || !(value in objects)) {
-    return count;
+    return dependents;
   }
-  return findDependents(objects[value], count + 1, objects);
+  dependents.push(value);
+  return findDependents(objects[value], dependents, objects);
 };
 
 const calculateTotalOrbits = (values, objects) => {
   let total = 0;
+
   for (const orbit of values) {
-    total += findDependents(orbit, 0, objects);
+    total += findDependents(orbit, [], objects).length;
   }
 
   return total;
 };
 
-const main = () => {
-  // console.log(inputs);
-  const orbits = makeObjects(inputs);
-  console.log(orbits);
+const calculateDistance = (you, san) => {
+  for (const orbit of san) {
+    if (you.includes(orbit)) {
+      return you.indexOf(orbit) + san.indexOf(orbit) - 2;
+    }
+  }
+  return 0;
+};
 
+const main = () => {
+  const orbits = makeObjects(inputs);
   const orbitsvalues = calculateTotalOrbits(Object.keys(orbits), orbits);
-  console.log(orbitsvalues);
+
+  const you = findDependents("YOU", [], orbits);
+  const san = findDependents("SAN", [], orbits);
+  console.log(you, san);
+
+  const distance = calculateDistance(you, san);
+
+  console.log("Part1: ", orbitsvalues);
+  console.log("Part2: ", distance);
 };
 
 main();
