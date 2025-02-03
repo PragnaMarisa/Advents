@@ -94,8 +94,6 @@ const runProgram = (inputs, instructionPointer) => {
       );
       instructionPointer += 4;
     }
-
-    if (!(opcode in operations)) return console.log(instructionPointer);
   }
 
   return inputs;

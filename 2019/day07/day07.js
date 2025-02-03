@@ -45,8 +45,13 @@ const operations = {
   8: equals,
 };
 
-const runProgram = (inputs, instructionPointer, prompts) => {
-  let val = 0;
+const runProgram = (values) => {
+  let instructionPointer = values.instructionPointer;
+  console.log("Vallues: ", values);
+
+  let prompts = values.val;
+  let inputs = values.inputs;
+  let val = -1;
   while (instructionPointer < inputs.length) {
     const instruction = inputs[instructionPointer];
 
@@ -79,6 +84,8 @@ const runProgram = (inputs, instructionPointer, prompts) => {
 
     if (opcode === 4) {
       val = operations[opcode](...getParameters([[o1, operandPos1]], inputs));
+      if (val !== -1 && prompts.length === 0)
+        return { instructionPointer, inputs, val };
       instructionPointer += 2;
     }
 
@@ -105,7 +112,7 @@ export const fetchInput = (file) => {
   return content.split(",").map(Number);
 };
 
-const sequence = [1, 0, 2, 3, 4];
+const sequence = [5, 6, 7, 8, 9];
 
 const getPermutations = (number) => {
   if (number.length === 1) return [number];
@@ -127,25 +134,48 @@ const inputs = fetchInput("./day07.txt");
 
 const main = () => {
   const possibleSequences = getPermutations(sequence);
-  // console.log(possibleSequences);
+  let trusters = -Infinity;
 
-  let maxOutput = 0;
-  // const arr = [0, 1, 2, 3, 4];
   for (const arr of possibleSequences) {
-    let result = 0;
+    const values = {
+      A: { instructionPointer: 0, inputs: [...inputs], val: 0 },
+      B: { instructionPointer: 0, inputs: [...inputs], val: 0 },
+      C: { instructionPointer: 0, inputs: [...inputs], val: 0 },
+      D: { instructionPointer: 0, inputs: [...inputs], val: 0 },
+      E: { instructionPointer: 0, inputs: [...inputs], val: 0 },
+    };
 
-    for (let index = 0; index < arr.length; index++) {
-      let prompts = [arr[index], result];
-      // console.log("Prompts", prompts);
+    const amplifiers = ["A", "B", "C", "D", "E"];
+    let ampIndex = 0;
 
-      result = runProgram([...inputs], 0, [...prompts]);
-      // console.log("result:", result);
+    values["A"] = runProgram({ ...values.A, val: [arr[0], 0] });
+    values["B"] = runProgram({ ...values.B, val: [arr[1], values.A.val] });
+    values["C"] = runProgram({ ...values.C, val: [arr[2], values.B.val] });
+    values["D"] = runProgram({ ...values.D, val: [arr[3], values.C.val] });
+    values["E"] = runProgram({ ...values.E, val: [arr[4], values.D.val] });
+
+    while (values[amplifiers[ampIndex]].inputs !== undefined) {
+      const amplifier = amplifiers[ampIndex];
+      const prevamplifier = amplifiers[ampIndex ? ampIndex - 1 : 4];
+
+      let result = runProgram({
+        ...values[amplifier],
+        val: [values[prevamplifier].val],
+      });
+
+      values[amplifier] = result;
+
+      if (values[amplifier].inputs === undefined) {
+        trusters =
+          trusters < values[prevamplifier].val
+            ? values[prevamplifier].val
+            : trusters;
+      }
+
+      ampIndex += ampIndex === 4 ? -4 : 1;
     }
-
-    maxOutput = Math.max(maxOutput, result);
   }
-
-  console.log("Max Output:", maxOutput);
+  console.log(trusters);
 };
 
 main();
